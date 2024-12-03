@@ -1,11 +1,6 @@
 import { RankingsTable } from '@/components/rankings/rankings-table';
 import { RankingsFilter } from '@/components/rankings/rankings-filter';
 
-export const metadata = {
-  title: 'Rankings - EsportsHub',
-  description: 'Global esports rankings and statistics',
-};
-
 export default function RankingsPage() {
   return (
     <div className="container py-8">
