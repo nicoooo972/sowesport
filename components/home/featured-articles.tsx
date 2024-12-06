@@ -32,7 +32,9 @@ const articles = [
 export function FeaturedArticles() {
   return (
     <section>
-      <h2 className="mb-6 text-3xl font-bold">Featured Articles</h2>
+      <h2 className="mb-6 text-3xl font-bold text-foreground bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+        Featured Articles
+      </h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {articles.map((article) => (
           <Link key={article.id} href={`/articles/${article.id}`}>
@@ -47,9 +49,13 @@ export function FeaturedArticles() {
               </div>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <Badge>{article.category}</Badge>
+                  <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                    {article.category}
+                  </Badge>
                 </div>
-                <CardTitle className="line-clamp-2">{article.title}</CardTitle>
+                <CardTitle className="line-clamp-2 text-foreground">
+                  {article.title}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="line-clamp-3 text-sm text-muted-foreground">

@@ -85,19 +85,26 @@ export function NewsCarousel() {
             </CarouselItem>
           ))}
         </CarouselContent>
+
+        {/* Enhanced navigation buttons with better visibility */}
+        <CarouselPrevious className="left-4 bg-white dark:bg-gray-800 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border-primary/20 shadow-lg" />
+        <CarouselNext className="right-4 bg-white dark:bg-gray-800 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 border-primary/20 shadow-lg" />
+
+        {/* Enhanced dot indicators */}
         <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2">
           {news.map((_, index) => (
             <button
               key={index}
-              className={`h-2 w-2 rounded-full transition-colors ${
-                current === index ? 'bg-white' : 'bg-white/50'
-              }`}
               onClick={() => api?.scrollTo(index)}
+              className={`h-2 w-2 rounded-full transition-all ${
+                current === index 
+                  ? 'bg-white w-4' 
+                  : 'bg-white/50 hover:bg-white/75'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
             />
           ))}
         </div>
-        <CarouselPrevious className="left-4" />
-        <CarouselNext className="right-4" />
       </Carousel>
     </section>
   );

@@ -31,10 +31,12 @@ const rankings = [
 export function RankingsPreview() {
   return (
     <section>
-      <h2 className="mb-6 text-2xl font-bold">Current Rankings</h2>
+      <h2 className="mb-6 text-2xl font-bold text-foreground bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+        Current Rankings
+      </h2>
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Top Teams</CardTitle>
+          <CardTitle className="text-lg text-foreground">Top Teams</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -44,11 +46,11 @@ export function RankingsPreview() {
                 className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0"
               >
                 <div className="flex items-center gap-4">
-                  <span className="text-lg font-bold">{team.rank}</span>
-                  <span>{team.team}</span>
+                  <span className="text-lg font-bold text-primary">{team.rank}</span>
+                  <span className="text-foreground">{team.team}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span>{team.points} pts</span>
+                  <span className="text-muted-foreground">{team.points} pts</span>
                   <Badge
                     variant={
                       team.change === 'up'
@@ -57,6 +59,13 @@ export function RankingsPreview() {
                         ? 'destructive'
                         : 'secondary'
                     }
+                    className={`${
+                      team.change === 'up'
+                        ? 'bg-primary text-primary-foreground'
+                        : team.change === 'down'
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-secondary text-secondary-foreground'
+                    }`}
                   >
                     {team.change}
                   </Badge>
@@ -66,7 +75,7 @@ export function RankingsPreview() {
           </div>
           <Link
             href="/rankings"
-            className="mt-4 block text-center text-sm text-muted-foreground hover:text-primary"
+            className="mt-4 block text-center text-sm text-primary hover:text-primary/80 transition-colors"
           >
             View Full Rankings →
           </Link>

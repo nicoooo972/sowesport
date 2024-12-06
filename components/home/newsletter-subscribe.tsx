@@ -21,10 +21,10 @@ export function NewsletterSubscribe() {
 
   return (
     <section className="py-8">
-      <Card className="mx-auto max-w-2xl">
+      <Card className="mx-auto max-w-2xl bg-gradient-to-br from-background-light to-background border border-primary/20">
         <CardHeader>
-          <CardTitle className="text-center">Stay Updated</CardTitle>
-          <p className="text-center text-muted-foreground">
+          <CardTitle className="text-center text-primary">Stay Updated</CardTitle>
+          <p className="text-center text-gray-400">
             Subscribe to our newsletter for the latest esports news and updates.
           </p>
         </CardHeader>
@@ -36,8 +36,11 @@ export function NewsletterSubscribe() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="bg-background-light border-primary/20 focus:border-primary text-white placeholder:text-gray-500"
             />
-            <Button type="submit">Subscribe</Button>
+            <Button type="submit" className="bg-primary hover:bg-primary-dark text-white">
+              Subscribe
+            </Button>
           </form>
         </CardContent>
       </Card>

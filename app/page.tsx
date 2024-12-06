@@ -6,6 +6,7 @@ import { NewsletterSubscribe } from '@/components/home/newsletter-subscribe';
 
 export default function Home() {
   return (
+    <div className="min-h-screen bg-background text-white">
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl space-y-12 py-8">
       <div className="max-w-6xl space-y-12 w-full">
         <NewsCarousel />
@@ -17,5 +18,6 @@ export default function Home() {
         <NewsletterSubscribe />
       </div>
     </div>
-  );
+  </div>
+);
 }
