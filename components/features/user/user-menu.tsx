@@ -9,8 +9,12 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { statusConfig } from './config';
+import { authService } from "@/services/authService";
+import { LogOut, Settings, UserCircle } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function UserMenu() {
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile>({
     id: '1',
     username: 'John Doe',
@@ -23,6 +27,25 @@ export function UserMenu() {
   });
 
   const [isOpen, setIsOpen] = useState(false);
+
+  // Chargement des données utilisateur
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await authService.getMe();
+        setProfile(prev => ({
+          ...prev,
+          id: userData.id,
+          username: userData.name,
+          email: userData.email,
+        }));
+      } catch (error) {
+        console.error('Failed to load user data:', error);
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   // Animation des notifications
   const notificationVariants = {
@@ -43,6 +66,20 @@ export function UserMenu() {
         primaryColor: color,
       },
     }));
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+      window.location.reload(); // Rafraîchir la page après la déconnexion
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
+
+  const handleProfileClick = () => {
+    setIsOpen(false); // Ferme le menu
+    router.push('/profile');
   };
 
   return (
@@ -81,7 +118,6 @@ export function UserMenu() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2 }}
             >
-              {/* Contenu existant du menu avec les nouvelles fonctionnalités */}
               <DropdownMenuLabel>
                 <div className="flex items-center gap-3">
                   <Avatar
@@ -99,6 +135,12 @@ export function UserMenu() {
               </DropdownMenuLabel>
 
               <DropdownMenuSeparator />
+
+              {/* Profil */}
+              <DropdownMenuItem onClick={handleProfileClick}>
+                <UserCircle className="mr-2 h-4 w-4" />
+                <span>Profil</span>
+              </DropdownMenuItem>
 
               {/* Sélecteur de statut */}
               <DropdownMenuSub>
@@ -124,12 +166,27 @@ export function UserMenu() {
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
 
+              {/* Paramètres */}
+              <DropdownMenuItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Paramètres</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
               {/* Personnalisation */}
               <ProfileCustomization
                 profile={profile}
                 onUpdateTheme={handleThemeUpdate}
               />
 
+              <DropdownMenuSeparator />
+
+              {/* Déconnexion */}
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Se déconnecter</span>
+              </DropdownMenuItem>
 
             </motion.div>
           </DropdownMenuContent>
