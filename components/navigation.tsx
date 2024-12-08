@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -15,15 +15,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from '@/components/ui/navigation-menu';
-import { Search, Menu, X, User, LogOut, Settings, UserCircle } from 'lucide-react';
+import { Search, Menu, X } from 'lucide-react';
 import { UserMenu } from './features/user/user-menu';
+import { authService } from '@/services/authService';
 
 const navItems = [
   { href: '/', label: 'Home' },
@@ -37,13 +31,55 @@ const navItems = [
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const pathname = usePathname();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Vérifier l'état de l'authentification au chargement
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        await authService.getMe();
+        setIsAuthenticated(true);
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle authentication
-    setIsAuthenticated(true);
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      await authService.login({
+        email: formData.get('email') as string,
+        password: formData.get('password') as string,
+      });
+      setIsAuthenticated(true);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Login failed:', error);
+      // Ici vous pourriez ajouter une notification d'erreur
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      await authService.register({
+        name: formData.get('username') as string,
+        email: formData.get('email') as string,
+        password: formData.get('password') as string,
+      });
+      
+      setIsAuthenticated(true);
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error('Registration failed:', error);
+    }
   };
 
   return (
@@ -80,7 +116,7 @@ export function Navigation() {
           <ThemeToggle />
           
           {!isAuthenticated ? (
-            <Dialog>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button className="bg-primary hover:bg-primary/90">
                   Se connecter
@@ -97,27 +133,29 @@ export function Navigation() {
                   </TabsList>
 
                   <TabsContent value="login">
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleLogin} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="email-login">Email</Label>
+                        <Label htmlFor="email">Email</Label>
                         <Input
-                          id="email-login"
+                          id="email"
+                          name="email"
                           type="email"
                           placeholder="exemple@email.com"
                           required
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="password-login">Mot de passe</Label>
+                        <Label htmlFor="password">Mot de passe</Label>
                         <Input
-                          id="password-login"
+                          id="password"
+                          name="password"
                           type="password"
                           placeholder="••••••••"
                           required
                         />
                       </div>
                       <div className="text-sm text-right">
-                        <button className="text-primary hover:underline">
+                        <button type="button" className="text-primary hover:underline">
                           Mot de passe oublié ?
                         </button>
                       </div>
@@ -128,11 +166,12 @@ export function Navigation() {
                   </TabsContent>
 
                   <TabsContent value="register">
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleRegister} className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="username">Nom d'utilisateur</Label>
                         <Input
                           id="username"
+                          name="username"
                           type="text"
                           placeholder="VotreUsername"
                           required
@@ -142,6 +181,7 @@ export function Navigation() {
                         <Label htmlFor="email-register">Email</Label>
                         <Input
                           id="email-register"
+                          name="email"
                           type="email"
                           placeholder="exemple@email.com"
                           required
@@ -151,6 +191,7 @@ export function Navigation() {
                         <Label htmlFor="password-register">Mot de passe</Label>
                         <Input
                           id="password-register"
+                          name="password"
                           type="password"
                           placeholder="••••••••"
                           required
@@ -160,6 +201,7 @@ export function Navigation() {
                         <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
                         <Input
                           id="confirm-password"
+                          name="confirm-password"
                           type="password"
                           placeholder="••••••••"
                           required
@@ -174,7 +216,7 @@ export function Navigation() {
               </DialogContent>
             </Dialog>
           ) : (
-            <UserMenu />  
+            <UserMenu />
           )}
 
           {/* Bouton menu mobile */}
@@ -193,7 +235,7 @@ export function Navigation() {
         </div>
       </div>
 
-      {/* Menu mobile amélioré */}
+      {/* Menu mobile */}
       {isMenuOpen && (
         <div className="border-b bg-background/95 backdrop-blur md:hidden">
           <nav className="container py-4">
