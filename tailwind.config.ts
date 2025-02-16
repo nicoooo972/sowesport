@@ -48,6 +48,11 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
       },
+      borderWidth: {
+        '1': '1px',
+        '2': '2px',
+        '3': '3px',
+      },
     },
   },
   plugins: [require('tailwindcss-animate')],
