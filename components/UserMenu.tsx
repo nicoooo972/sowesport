@@ -40,24 +40,33 @@ export function UserMenu() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // useEffect(() => {
-  //   const fetchProfile = async () => {
-  //     if (!user?.id) return;
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) {
+        setProfile(null);
+        setIsAdmin(false);
+        return;
+      }
 
-  //     const { data, error } = await supabase
-  //       .from("profiles")
-  //       .select("username, avatar_url, role")
-  //       .eq("id", user.id)
-  //       .single();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username, avatar_url, role")
+        .eq("id", user.id)
+        .single();
 
-  //     if (data) {
-  //       setProfile(data);
-  //       setIsAdmin(data.role === "admin");
-  //     }
-  //   };
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
 
-  //   fetchProfile();
-  // }, [user]);
+      if (data) {
+        setProfile(data as UserProfile);
+        setIsAdmin(data.role === "admin");
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
