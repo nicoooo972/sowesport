@@ -12,8 +12,12 @@ import { ModeToggle } from "../mode-toggle";
 const navigation = [
   { name: "Accueil", href: "/" },
   { name: "Evénements", href: "/evenements" },
-  { name: "Carte", href: "/boutique" },
+  { name: "Carte", href: "/carte" },
   { name: "Boutique", href: "/boutique" },
+  { name: "Forum", href: "/forum" },
+  { name: "Classements", href: "/classements" },
+  { name: "Articles", href: "/articles" },
+  { name: "Interviews", href: "/interviews" },
   { name: "Abonnement", href: "/abonnement" },
 ];
 
