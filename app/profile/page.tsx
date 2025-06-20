@@ -27,7 +27,7 @@ interface Profile {
 }
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -50,9 +50,34 @@ export default function ProfilePage() {
           .eq("id", user.id)
           .single();
 
-        if (error) throw error;
+        if (error && error.code === "PGRST116") {
+          // Aucun profil trouvé, créer un profil par défaut
+          const defaultProfile = {
+            id: user.id,
+            username: user.email?.split("@")[0] || "Utilisateur",
+            bio: "",
+            avatar_url: null,
+            role: "user",
+            created_at: new Date().toISOString(),
+          };
 
-        if (data) {
+          const { data: newProfile, error: createError } = await supabase
+            .from("profiles")
+            .insert(defaultProfile)
+            .select()
+            .single();
+
+          if (createError) throw createError;
+
+          setProfile(newProfile);
+          setFormData({
+            username: newProfile.username || "",
+            bio: newProfile.bio || "",
+            avatar_url: newProfile.avatar_url,
+          });
+        } else if (error) {
+          throw error;
+        } else if (data) {
           setProfile(data);
           setFormData({
             username: data.username || "",
@@ -167,7 +192,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
@@ -175,13 +200,21 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user || !profile) {
+  if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <h1 className="text-2xl font-bold">Accès non autorisé</h1>
         <p className="text-muted-foreground">
           Veuillez vous connecter pour accéder à votre profil.
         </p>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
       </div>
     );
   }
