@@ -119,7 +119,7 @@ Cette interview écrite explore en profondeur les techniques, l'état d'esprit e
 };
 
 // Questions et réponses pour les interviews
-export const interviewQuestions: Record<string, Question[]> = {
+const interviewQuestions: Record<string, Question[]> = {
   "kcorp-cabochard-interview": [
     {
       id: "q1",
