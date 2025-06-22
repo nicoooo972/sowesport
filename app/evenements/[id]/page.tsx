@@ -1,4 +1,5 @@
 import EventDetailClient from "./EventDetailClient";
+import { supabase } from "@/lib/supabase";
 
 // Types pour les équipes et classements
 interface Team {
@@ -32,7 +33,7 @@ interface Event {
   organizerLogo: string;
 }
 
-// Données mock pour les événements
+// Données mock pour les événements (fallback)
 const eventsData: { [key: string]: Event } = {
   "1": {
     id: "1",
@@ -140,24 +141,37 @@ const currentRanking: Team[] = [
   }
 ];
 
+// Fonction requise pour l'export statique - récupère les événements depuis Supabase
+export async function generateStaticParams() {
+  try {
+    const { data: events, error } = await supabase
+      .from('events')
+      .select('id');
 
+    if (error) {
+      console.error('Erreur lors de la récupération des événements:', error);
+      // Fallback sur les données mockées
+      return Object.keys(eventsData).map((id) => ({ id }));
+    }
 
-// Fonction requise pour l'export statique
-export function generateStaticParams() {
-  return Object.keys(eventsData).map((id) => ({
-    id: id,
-  }));
+    // Combiner les événements Supabase et mockés
+    const supabaseIds = events?.map(event => ({ id: event.id })) || [];
+    const mockIds = Object.keys(eventsData).map((id) => ({ id }));
+    
+    return [...supabaseIds, ...mockIds];
+  } catch (error) {
+    console.error('Erreur:', error);
+    // Fallback sur les données mockées
+    return Object.keys(eventsData).map((id) => ({ id }));
+  }
 }
 
-export default function EventDetailPage({ params }: { params: { id: string } }) {
-  const eventId = params.id;
-  const eventData = eventsData[eventId] || eventsData["1"]; // Fallback sur le premier événement
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
 
-  return (
-    <EventDetailClient 
-      eventData={eventData}
-      participatingTeams={participatingTeams}
-      currentRanking={currentRanking}
-    />
-  );
+export default function EventDetailPage({ params }: PageProps) {
+  return <EventDetailClient eventId={params.id} />;
 } 

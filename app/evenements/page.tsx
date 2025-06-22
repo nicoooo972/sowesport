@@ -1,164 +1,89 @@
 "use client";
 
-import { useState } from "react";
-import { Search, MapPin, Calendar, Users, Euro, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, MapPin, Calendar, Users, Euro, Filter, Plus } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/lib/supabase";
+import { useAdmin } from "@/hooks/useAdmin";
 
 // Types pour les événements
 interface Event {
   id: string;
   title: string;
+  subtitle?: string;
+  description?: string;
   game: string;
-  description: string;
-  teams: number;
-  prize: string;
-  location: string;
-  date: string;
-  status: "online" | "closed";
-  image: string;
-  gameType: string;
+  teams_count: number;
+  prize_pool?: string;
+  location?: string;
+  event_date?: string;
+  event_time?: string;
+  status: string;
+  image_url?: string;
+  format_description?: string;
+  organizer_name?: string;
+  organizer_logo?: string;
+  registration_open: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
-
-// Données mock pour les événements
-const currentEvents: Event[] = [
-  {
-    id: "1",
-    title: "LFL Spring Split",
-    game: "League of Legends",
-    description: "Le plus grand tournoi français de League of Legends revient pour une nouvelle édition !",
-    teams: 16,
-    prize: "1 000 000 €",
-    location: "Paris",
-    date: "20 Fév 2025",
-    status: "online",
-    image: "/api/placeholder/400/200",
-    gameType: "MOBA"
-  },
-  {
-    id: "2", 
-    title: "Rocket League World Cup",
-    game: "Rocket League",
-    description: "Les meilleures équipes de Rocket League s'affrontent pour le titre de champion du monde.",
-    teams: 12,
-    prize: "500 000 €",
-    location: "Lyon",
-    date: "25 Février 2025",
-    status: "online",
-    image: "/api/placeholder/400/200",
-    gameType: "Sports"
-  },
-  {
-    id: "3",
-    title: "Valorant Champions Tour",
-    game: "Valorant",
-    description: "La scène compétitive de Valorant atteint de nouveaux sommets avec cet événement international.",
-    teams: 20,
-    prize: "750 000 €",
-    location: "Bordeaux",
-    date: "13 Février 2025",
-    status: "online",
-    image: "/api/placeholder/400/200",
-    gameType: "FPS"
-  },
-  {
-    id: "4",
-    title: "Call of Duty Mobile Championship",
-    game: "Call of Duty Mobile",
-    description: "Les légendes de Call of Duty Mobile se battent pour l'ultime victoire.",
-    teams: 10,
-    prize: "300 000 €",
-    location: "Paris",
-    date: "18 Mars 2025",
-    status: "closed",
-    image: "/api/placeholder/400/200",
-    gameType: "FPS"
-  }
-];
-
-const upcomingEvents: Event[] = [
-  {
-    id: "5",
-    title: "Clash Royale Crown Championship",
-    game: "Clash Royale",
-    description: "Le tournoi ultime pour les fans de Clash Royale, avec des affrontements épiques.",
-    teams: 64,
-    prize: "200 000 €",
-    location: "Toulouse",
-    date: "10 Mars 2025",
-    status: "online",
-    image: "/api/placeholder/400/200",
-    gameType: "Mobile"
-  },
-  {
-    id: "6",
-    title: "PUBG Global Invitational",
-    game: "PUBG",
-    description: "Préparez-vous à vivre une bataille royale comme jamais auparavant.",
-    teams: 24,
-    prize: "2 000 000 €",
-    location: "Nantes",
-    date: "15 Mars 2025",
-    status: "online",
-    image: "/api/placeholder/400/200",
-    gameType: "Battle Royale"
-  },
-  {
-    id: "7",
-    title: "Apex Legends Global Series",
-    game: "Apex Legends",
-    description: "Les champions d'Apex Legends se rassemblent pour cette compétition épique.",
-    teams: 40,
-    prize: "1 000 000 €",
-    location: "Montpellier",
-    date: "18 Mars 2025",
-    status: "online",
-    image: "/api/placeholder/400/200",
-    gameType: "Battle Royale"
-  },
-  {
-    id: "8",
-    title: "StarCraft II Global Championship",
-    game: "StarCraft II",
-    description: "Le rendez-vous stratégique de l'année pour les amateurs de temps réel.",
-    teams: 32,
-    prize: "800 000 €",
-    location: "En ligne",
-    date: "22 Mars 2025",
-    status: "online",
-    image: "/api/placeholder/400/200",
-    gameType: "RTS"
-  }
-];
 
 // Composant pour les cartes d'événements
 function EventCard({ event }: { event: Event }) {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "Date à confirmer";
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  const getStatusBadge = (status: string, registrationOpen: boolean) => {
+    if (status === 'completed') {
+      return (
+        <Badge variant="secondary" className="bg-gray-600 hover:bg-gray-700">
+          Terminé
+        </Badge>
+      );
+    }
+    if (status === 'live') {
+      return (
+        <Badge className="bg-red-600 hover:bg-red-700 animate-pulse">
+          En cours
+        </Badge>
+      );
+    }
+    if (registrationOpen) {
+      return (
+        <Badge className="bg-green-600 hover:bg-green-700">
+          Inscriptions ouvertes
+        </Badge>
+      );
+    }
+    return (
+      <Badge variant="outline" className="border-purple-500 text-purple-400 bg-purple-500/10">
+        À venir
+      </Badge>
+    );
+  };
+
   return (
     <Card className="relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700 hover:border-purple-500/50 transition-all duration-300 hover:scale-105">
       <div 
         className="h-48 bg-cover bg-center relative"
         style={{
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${event.image}')`
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${event.image_url || '/api/placeholder/400/200'}')`
         }}
       >
         {/* Badges de statut */}
         <div className="absolute top-3 left-3 flex gap-2">
-          <Badge 
-            variant={event.status === "online" ? "default" : "secondary"}
-            className={event.status === "online" ? "bg-purple-600 hover:bg-purple-700" : "bg-gray-600 hover:bg-gray-700"}
-          >
-            En ligne
-          </Badge>
-          <Badge 
-            variant="outline" 
-            className="border-red-500 text-red-400 bg-red-500/10"
-          >
-            Close
-          </Badge>
+          {getStatusBadge(event.status, event.registration_open)}
         </div>
       </div>
       
@@ -167,31 +92,40 @@ function EventCard({ event }: { event: Event }) {
           <div>
             <h3 className="font-bold text-lg text-white">{event.title}</h3>
             <p className="text-purple-400 font-medium">{event.game}</p>
+            {event.subtitle && (
+              <p className="text-gray-400 text-sm">{event.subtitle}</p>
+            )}
           </div>
           
-          <p className="text-gray-300 text-sm leading-relaxed">
-            {event.description}
-          </p>
+          {event.description && (
+            <p className="text-gray-300 text-sm leading-relaxed line-clamp-2">
+              {event.description}
+            </p>
+          )}
           
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="flex items-center gap-2 text-gray-300">
               <Users className="w-4 h-4" />
-              <span>{event.teams} équipes</span>
+              <span>{event.teams_count} équipes</span>
             </div>
-            <div className="flex items-center gap-2 text-gray-300">
-              <Euro className="w-4 h-4" />
-              <span>{event.prize}</span>
-            </div>
+            {event.prize_pool && (
+              <div className="flex items-center gap-2 text-gray-300">
+                <Euro className="w-4 h-4" />
+                <span>{event.prize_pool}</span>
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2 text-gray-300">
-              <MapPin className="w-4 h-4" />
-              <span>{event.location}</span>
-            </div>
+            {event.location && (
+              <div className="flex items-center gap-2 text-gray-300">
+                <MapPin className="w-4 h-4" />
+                <span>{event.location}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-gray-300">
               <Calendar className="w-4 h-4" />
-              <span>{event.date}</span>
+              <span>{formatDate(event.event_date)}</span>
             </div>
           </div>
           
@@ -207,12 +141,86 @@ function EventCard({ event }: { event: Event }) {
 }
 
 export default function EvenementsPage() {
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [eventFilter, setEventFilter] = useState("all");
   const [gameTypeFilter, setGameTypeFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
+  const { isAdmin, loading: adminLoading } = useAdmin();
 
-  const recentSearches = ["League of Legends", "CS:GO", "Valorant", "Dota 2"];
+  const recentSearches = ["League of Legends", "Valorant", "CS:GO", "Rocket League"];
+
+  // Récupérer les événements depuis Supabase
+  useEffect(() => {
+    async function fetchEvents() {
+      try {
+        setLoading(true);
+        let query = supabase
+          .from('events')
+          .select('*')
+          .order('event_date', { ascending: true });
+
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Erreur lors du chargement des événements:', error);
+          return;
+        }
+
+        setEvents(data || []);
+      } catch (error) {
+        console.error('Erreur:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchEvents();
+  }, []);
+
+  // Filtrer les événements
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = !searchQuery || 
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.game.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesEventFilter = eventFilter === "all" || 
+      (eventFilter === "online" && event.registration_open) ||
+      (eventFilter === "offline" && !event.registration_open);
+    
+    const matchesGameType = gameTypeFilter === "all" || 
+      event.game.toLowerCase().includes(gameTypeFilter.toLowerCase());
+    
+    const matchesLocation = locationFilter === "all" || 
+      (event.location && event.location.toLowerCase().includes(locationFilter.toLowerCase())) ||
+      (locationFilter === "online" && !event.location);
+
+    return matchesSearch && matchesEventFilter && matchesGameType && matchesLocation;
+  });
+
+  // Séparer les événements actuels et à venir
+  const currentDate = new Date();
+  const currentEvents = filteredEvents.filter(event => {
+    if (!event.event_date) return event.status === 'live';
+    const eventDate = new Date(event.event_date);
+    return event.status === 'live' || 
+           (eventDate <= currentDate && event.status !== 'completed');
+  });
+
+  const upcomingEvents = filteredEvents.filter(event => {
+    if (!event.event_date) return event.status === 'upcoming';
+    const eventDate = new Date(event.event_date);
+    return eventDate > currentDate && event.status !== 'completed';
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-violet-900 flex items-center justify-center">
+        <div className="text-white text-xl">Chargement des événements...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-violet-900">
@@ -225,6 +233,18 @@ export default function EvenementsPage() {
           <p className="text-xl text-gray-200 max-w-2xl mx-auto">
             Découvrez les événements esport en France !
           </p>
+          
+          {/* Bouton Admin */}
+          {isAdmin && !adminLoading && (
+            <div className="mt-8">
+              <Link href="/admin/evenements">
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105">
+                  <Plus className="w-5 h-5 mr-2" />
+                  Gérer les événements
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -251,8 +271,8 @@ export default function EvenementsPage() {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
                   <SelectItem value="all">Tous les événements</SelectItem>
-                  <SelectItem value="online">En ligne</SelectItem>
-                  <SelectItem value="offline">Hors ligne</SelectItem>
+                  <SelectItem value="online">Inscriptions ouvertes</SelectItem>
+                  <SelectItem value="offline">Inscriptions fermées</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -261,12 +281,12 @@ export default function EvenementsPage() {
                   <SelectValue placeholder="Type de jeux" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="all">Type de jeux</SelectItem>
-                  <SelectItem value="moba">MOBA</SelectItem>
-                  <SelectItem value="fps">FPS</SelectItem>
-                  <SelectItem value="battle-royale">Battle Royale</SelectItem>
-                  <SelectItem value="sports">Sports</SelectItem>
-                  <SelectItem value="rts">RTS</SelectItem>
+                  <SelectItem value="all">Tous les jeux</SelectItem>
+                  <SelectItem value="league">League of Legends</SelectItem>
+                  <SelectItem value="valorant">Valorant</SelectItem>
+                  <SelectItem value="cs">Counter-Strike</SelectItem>
+                  <SelectItem value="rocket">Rocket League</SelectItem>
+                  <SelectItem value="apex">Apex Legends</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -275,7 +295,7 @@ export default function EvenementsPage() {
                   <SelectValue placeholder="Lieu" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="all">Lieu</SelectItem>
+                  <SelectItem value="all">Tous les lieux</SelectItem>
                   <SelectItem value="paris">Paris</SelectItem>
                   <SelectItem value="lyon">Lyon</SelectItem>
                   <SelectItem value="bordeaux">Bordeaux</SelectItem>
@@ -287,7 +307,7 @@ export default function EvenementsPage() {
             {/* Recherches récentes */}
             <div className="mt-6">
               <div className="flex items-center gap-4">
-                <span className="text-gray-300 font-medium">Vos dernières recherches :</span>
+                <span className="text-gray-300 font-medium">Recherches populaires :</span>
                 <div className="flex gap-2 flex-wrap">
                   {recentSearches.map((search) => (
                     <Badge
@@ -307,28 +327,42 @@ export default function EvenementsPage() {
       </div>
 
       {/* Événements en cours */}
-      <div className="max-w-7xl mx-auto px-4 mb-16">
-        <h2 className="text-3xl font-bold text-white mb-8">
-          Événements en cours
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {currentEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+      {currentEvents.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 mb-16">
+          <h2 className="text-3xl font-bold text-white mb-8">
+            Événements en cours
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {currentEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Événements à venir */}
-      <div className="max-w-7xl mx-auto px-4 pb-16">
-        <h2 className="text-3xl font-bold text-white mb-8">
-          Événements à venir
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
+      {upcomingEvents.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 pb-16">
+          <h2 className="text-3xl font-bold text-white mb-8">
+            Événements à venir
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {upcomingEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Message si aucun événement */}
+      {!loading && filteredEvents.length === 0 && (
+        <div className="max-w-7xl mx-auto px-4 pb-16 text-center">
+          <div className="text-white text-xl mb-4">Aucun événement trouvé</div>
+          <p className="text-gray-300">
+            Essayez de modifier vos critères de recherche ou revenez plus tard pour de nouveaux événements.
+          </p>
+        </div>
+      )}
     </div>
   );
 } 
