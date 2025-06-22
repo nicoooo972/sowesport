@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, User, Shield, History, Upload, Loader2 } from "lucide-react";
+import { Settings, User, Shield, History, Upload, Loader2, Bookmark, BarChart3 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
+import ActivityHistory from "@/components/profile/activity-history";
+import UserBookmarks from "@/components/profile/user-bookmarks";
 
 interface Profile {
   username: string;
@@ -147,16 +149,53 @@ export default function ProfilePage() {
     const file = event.target.files?.[0];
     if (!file || !user?.id) return;
 
+    // Validation du fichier
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    
+    if (file.size > maxSize) {
+      toast({
+        title: "Fichier trop volumineux",
+        description: "La taille maximale autorisée est de 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Format non supporté",
+        description: "Formats acceptés: JPEG, PNG, WebP, GIF.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
     try {
-      // Créer un nom de fichier unique
+      // Supprimer l'ancien avatar s'il existe
+      if (profile?.avatar_url) {
+        const oldPath = profile.avatar_url.split('/').pop();
+        if (oldPath && oldPath.includes(user.id)) {
+          await supabase.storage
+            .from("avatars")
+            .remove([`avatars/${oldPath}`]);
+        }
+      }
+
+      // Créer un nom de fichier unique avec timestamp
       const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
       const filePath = `avatars/${fileName}`;
 
-      // Upload du fichier
+      // Upload du fichier avec options
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
@@ -168,7 +207,10 @@ export default function ProfilePage() {
       // Mettre à jour le profil avec la nouvelle URL
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: publicUrl })
+        .update({ 
+          avatar_url: publicUrl,
+          updated_at: new Date().toISOString()
+        })
         .eq("id", user.id);
 
       if (updateError) throw updateError;
@@ -189,6 +231,8 @@ export default function ProfilePage() {
           "Impossible de mettre à jour votre avatar. Veuillez réessayer.",
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -277,13 +321,21 @@ export default function ProfilePage() {
               <User className="w-4 h-4" />
               Profil
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Settings className="w-4 h-4" />
-              Paramètres
+            <TabsTrigger value="bookmarks" className="gap-2">
+              <Bookmark className="w-4 h-4" />
+              Favoris
             </TabsTrigger>
             <TabsTrigger value="activity" className="gap-2">
               <History className="w-4 h-4" />
               Activité
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Statistiques
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="w-4 h-4" />
+              Paramètres
             </TabsTrigger>
           </TabsList>
 
@@ -394,19 +446,93 @@ export default function ProfilePage() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="bookmarks">
+            <UserBookmarks />
+          </TabsContent>
+
           <TabsContent value="activity">
+            <ActivityHistory />
+          </TabsContent>
+
+          <TabsContent value="stats">
             <Card>
               <CardHeader>
-                <CardTitle>Activité récente</CardTitle>
+                <CardTitle>Mes statistiques</CardTitle>
                 <CardDescription>
-                  Historique de vos actions et interactions
+                  Aperçu de votre activité et performances
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    L&apos;historique des activités sera bientôt disponible.
-                  </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-blue-600 dark:text-blue-400 text-sm font-medium">Articles lus</p>
+                        <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">24</p>
+                      </div>
+                      <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                        📖
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-green-600 dark:text-green-400 text-sm font-medium">Événements</p>
+                        <p className="text-2xl font-bold text-green-700 dark:text-green-300">7</p>
+                      </div>
+                      <div className="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                        🎯
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-purple-50 dark:bg-purple-950 p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-purple-600 dark:text-purple-400 text-sm font-medium">Points</p>
+                        <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">342</p>
+                      </div>
+                      <div className="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center">
+                        ⭐
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 dark:bg-amber-950 p-4 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-amber-600 dark:text-amber-400 text-sm font-medium">Niveau</p>
+                        <p className="text-2xl font-bold text-amber-700 dark:text-amber-300">8</p>
+                      </div>
+                      <div className="w-8 h-8 bg-amber-100 dark:bg-amber-900 rounded-full flex items-center justify-center">
+                        🏆
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-4">Badges récents</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                      <div className="text-2xl mb-1">🔥</div>
+                      <p className="text-xs font-medium">Lecteur assidu</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                      <div className="text-2xl mb-1">💬</div>
+                      <p className="text-xs font-medium">Commentateur</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                      <div className="text-2xl mb-1">📚</div>
+                      <p className="text-xs font-medium">Collectionneur</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center opacity-50">
+                      <div className="text-2xl mb-1">🎮</div>
+                      <p className="text-xs font-medium">À débloquer</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

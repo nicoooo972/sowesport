@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Heart, Eye, Calendar, Clock, Share2, User, Twitter, Facebook, Linkedin, BookOpen } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,9 @@ import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import Image from "next/image";
 import { ArticleDetail } from "./page";
+import InteractionButtons from "@/components/shared/interaction-buttons";
+import CommentsSystem from "@/components/shared/comments-system";
+import { useUserInteractions } from "@/hooks/useUserInteractions";
 
 // Composant pour la table des matières
 function TableOfContents({ tableOfContents }: { tableOfContents: ArticleDetail["tableOfContents"] }) {
@@ -178,6 +181,15 @@ export default function ArticleDetailClient({ article }: ArticleDetailClientProp
   const [isLiked, setIsLiked] = useState(article.isLiked);
   const [likes, setLikes] = useState(article.likes);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  
+  const { recordView } = useUserInteractions();
+
+  // Logger la vue de l'article au chargement
+  useEffect(() => {
+    if (article.id) {
+      recordView('article', article.id);
+    }
+  }, [article.id, recordView]);
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -223,7 +235,7 @@ export default function ArticleDetailClient({ article }: ArticleDetailClientProp
       .replace(/^\*(.*?)\*/gm, '<em class="text-gray-300 italic">$1</em>')
       .replace(/^- (.*$)/gm, '<li class="text-gray-200 mb-1">$1</li>')
       .replace(/^([^<\n]+)$/gm, '<p class="text-gray-200 mb-4 leading-relaxed">$1</p>')
-      .replace(/(<li.*?<\/li>)/gs, '<ul class="list-disc list-inside mb-4 space-y-1 ml-4">$1</ul>');
+      .replace(/(<li.*?<\/li>)/g, '<ul class="list-disc list-inside mb-4 space-y-1 ml-4">$1</ul>');
   };
 
   return (
@@ -310,64 +322,11 @@ export default function ArticleDetailClient({ article }: ArticleDetailClientProp
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                className={`border-slate-600 transition-colors ${
-                  isLiked 
-                    ? 'text-red-500 border-red-500 hover:bg-red-500/10' 
-                    : 'text-gray-400 hover:text-white hover:bg-slate-700'
-                }`}
-                onClick={handleLike}
-              >
-                <Heart className={`w-4 h-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
-                {likes}
-              </Button>
-
-              <div className="relative">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="border-slate-600 text-gray-400 hover:text-white hover:bg-slate-700"
-                  onClick={() => setShowShareMenu(!showShareMenu)}
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Partager
-                </Button>
-
-                {showShareMenu && (
-                  <div className="absolute top-full left-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg shadow-lg p-2 z-10">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleShare("twitter")}
-                        className="text-gray-400 hover:text-blue-400"
-                      >
-                        <Twitter className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleShare("facebook")}
-                        className="text-gray-400 hover:text-blue-600"
-                      >
-                        <Facebook className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleShare("linkedin")}
-                        className="text-gray-400 hover:text-blue-500"
-                      >
-                        <Linkedin className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <InteractionButtons 
+              contentId={article.id || 'article-1'}
+              contentType="article"
+              variant="default"
+            />
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 mt-4">
@@ -394,12 +353,22 @@ export default function ArticleDetailClient({ article }: ArticleDetailClientProp
           </div>
 
           {/* Contenu de l'article */}
-          <div className="lg:col-span-2 order-1 lg:order-2">
+          <div className="lg:col-span-2 order-1 lg:order-2 space-y-6">
             <Card className="bg-slate-800/50 border-slate-700">
               <CardContent className="p-8">
                 <div 
                   className="prose prose-invert max-w-none"
                   dangerouslySetInnerHTML={{ __html: formatContent(article.content) }}
+                />
+              </CardContent>
+            </Card>
+            
+            {/* Système de commentaires */}
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-6">
+                <CommentsSystem 
+                  contentId={article.id || 'article-1'}
+                  contentType="article"
                 />
               </CardContent>
             </Card>
