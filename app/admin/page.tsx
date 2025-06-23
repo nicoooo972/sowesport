@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-// import { Progress } from "@/components/ui/progress";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/lib/supabase";
@@ -318,7 +318,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">
                     +{stats?.newUsersThisWeek || 0} cette semaine
                   </p>
-                  {/* <Progress value={75} className="mt-2" /> */}
+                  <Progress value={75} className="mt-2" />
                 </CardContent>
               </Card>
 
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">
                     +{stats?.articlesThisWeek || 0} cette semaine
                   </p>
-                  {/* <Progress value={60} className="mt-2" /> */}
+                  <Progress value={60} className="mt-2" />
                 </CardContent>
               </Card>
 
@@ -346,7 +346,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">
                     {stats?.activeEvents || 0} actifs
                   </p>
-                  {/* <Progress value={85} className="mt-2" /> */}
+                  <Progress value={85} className="mt-2" />
                 </CardContent>
               </Card>
 
@@ -360,7 +360,7 @@ export default function AdminDashboard() {
                   <p className="text-xs text-muted-foreground">
                     Total likes & interactions
                   </p>
-                  {/* <Progress value={90} className="mt-2" /> */}
+                  <Progress value={90} className="mt-2" />
                 </CardContent>
               </Card>
             </div>
