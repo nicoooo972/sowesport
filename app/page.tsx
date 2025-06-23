@@ -2,7 +2,7 @@ import { FeaturedArticles } from "@/components/home/featured-articles";
 import { NewsCarousel } from "@/components/home/news-carousel";
 import { InterviewHighlights } from "@/components/home/interview-highlights";
 import { RankingsPreview } from "@/components/home/rankings-preview";
-import { NewsletterSubscribe } from "@/components/home/newsletter-subscribe";
+import NewsletterSubscribe from "@/components/home/newsletter-subscribe";
 
 export default function Home() {
   return (

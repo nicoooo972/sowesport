@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 
@@ -9,20 +9,31 @@ export function useAdmin() {
 
   useEffect(() => {
     async function checkAdminStatus() {
-      if (!user?.id) {
+      if (!user) {
         setIsAdmin(false);
         setLoading(false);
         return;
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
 
-      setIsAdmin(data?.role === 'admin');
-      setLoading(false);
+        if (error) {
+          console.error('Erreur lors de la vérification du rôle:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(profile?.role === 'admin');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        setIsAdmin(false);
+      } finally {
+        setLoading(false);
+      }
     }
 
     checkAdminStatus();
