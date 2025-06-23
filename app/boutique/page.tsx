@@ -471,13 +471,14 @@ function ProductCard({
                     selectedColor === color ? 'border-purple-500' : 'border-gray-300'
                   }`}
                   style={{
-                    backgroundColor: color.toLowerCase() === 'noir' ? '#000' :
-                                   color.toLowerCase() === 'blanc' ? '#fff' :
-                                   color.toLowerCase() === 'violet' ? '#8b5cf6' :
-                                   color.toLowerCase() === 'gris' ? '#6b7280' :
-                                   color.toLowerCase() === 'rouge' ? '#ef4444' :
-                                   color.toLowerCase() === 'bleu marine' ? '#1e3a8a' :
-                                   color.toLowerCase() === 'beige' ? '#d2b48c' : '#6b7280'
+                    backgroundColor: 
+                      color.toLowerCase() === 'noir' ? '#000' :
+                      color.toLowerCase() === 'blanc' ? '#fff' :
+                      color.toLowerCase() === 'violet' ? '#8b5cf6' :
+                      color.toLowerCase() === 'gris' ? '#6b7280' :
+                      color.toLowerCase() === 'rouge' ? '#ef4444' :
+                      color.toLowerCase() === 'bleu marine' ? '#1e3a8a' :
+                      color.toLowerCase() === 'beige' ? '#d2b48c' : '#6b7280'
                   }}
                   title={color}
                 />
