@@ -8,6 +8,7 @@ import { UserMenu } from "../UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { ModeToggle } from "../mode-toggle";
+import { NotificationManager } from "../pwa/notification-manager";
 
 const navigation = [
   { name: "Accueil", href: "/" },
@@ -105,6 +106,7 @@ export function Navbar() {
 
         {/* Actions Desktop */}
         <div className="hidden lg:flex lg:items-center lg:gap-4">
+          <NotificationManager />
           <ModeToggle />
           {user ? (
             <UserMenu />
