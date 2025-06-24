@@ -1,24 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthModal } from "../auth/AuthModal";
 import { UserMenu } from "../UserMenu";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { ModeToggle } from "../mode-toggle";
-import { NotificationManager } from "../pwa/notification-manager";
 
 const navigation = [
   { name: "Accueil", href: "/" },
   { name: "Evénements", href: "/evenements" },
-  { name: "Carte", href: "/carte" },
-  { name: "Boutique", href: "/boutique" },
-  { name: "Forum", href: "/forum" },
   { name: "Classements", href: "/classements" },
+  { name: "Carte", href: "/carte" },
   { name: "Articles", href: "/articles" },
   { name: "Interviews", href: "/interviews" },
+  { name: "Forum", href: "/forum" },
+  { name: "Boutique", href: "/boutique" },
   { name: "Abonnement", href: "/abonnement" },
 ];
 
@@ -106,16 +105,17 @@ export function Navbar() {
 
         {/* Actions Desktop */}
         <div className="hidden lg:flex lg:items-center lg:gap-4">
-          <NotificationManager />
           <ModeToggle />
           {user ? (
             <UserMenu />
           ) : (
             <Button
               onClick={() => setShowAuthModal(true)}
+              size="icon"
               className="bg-gradient-to-r from-purple-600/90 to-violet-500/90 hover:from-purple-500 hover:to-violet-400 text-white transition-all duration-300"
             >
-              Se connecter
+              <User className="h-5 w-5" />
+              <span className="sr-only">Se connecter</span>
             </Button>
           )}
         </div>
@@ -178,6 +178,7 @@ export function Navbar() {
                   }}
                   className="w-full bg-gradient-to-r from-purple-600/90 to-violet-500/90 hover:from-purple-500 hover:to-violet-400 text-white"
                 >
+                  <User className="h-5 w-5 mr-2" />
                   Se connecter
                 </Button>
               )}
