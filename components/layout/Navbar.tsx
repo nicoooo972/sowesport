@@ -13,7 +13,7 @@ const navigation = [
   { name: "Accueil", href: "/" },
   { name: "Evénements", href: "/evenements" },
   { name: "Classements", href: "/classements" },
-  { name: "Carte", href: "/carte" },
+  { name: "Carte", href: "/tournaments-map" },
   { name: "Articles", href: "/articles" },
   { name: "Interviews", href: "/interviews" },
   { name: "Forum", href: "/forum" },
@@ -42,7 +42,7 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed w-full z-50 transition-all duration-300 ${
+      className={`fixed w-full z-[9999] transition-all duration-300 ${
         scrolled ? "bg-background shadow-md" : "bg-background"
       }`}
     >
@@ -123,7 +123,7 @@ export function Navbar() {
 
       {/* Menu Mobile avec nouvelle animation */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998] transition-opacity duration-300 lg:hidden ${
           mobileMenuOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
@@ -132,7 +132,7 @@ export function Navbar() {
       />
 
       <div
-        className={`lg:hidden fixed inset-y-0 right-0 z-50 w-full sm:max-w-sm bg-background shadow-xl transform transition-all duration-500 ease-in-out ${
+        className={`lg:hidden fixed inset-y-0 right-0 z-[10000] w-full sm:max-w-sm bg-background shadow-xl transform transition-all duration-500 ease-in-out ${
           mobileMenuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

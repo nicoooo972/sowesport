@@ -48,6 +48,13 @@ interface EventForm {
   teams_count: number;
   prize_pool: string;
   location: string;
+  full_address: string;
+  city: string;
+  postal_code: string;
+  country: string;
+  venue_name: string;
+  latitude: string;
+  longitude: string;
   event_date: string;
   event_time: string;
   status: string;
@@ -66,6 +73,13 @@ const initialForm: EventForm = {
   teams_count: 0,
   prize_pool: "",
   location: "",
+  full_address: "",
+  city: "",
+  postal_code: "",
+  country: "France",
+  venue_name: "",
+  latitude: "",
+  longitude: "",
   event_date: "",
   event_time: "",
   status: "upcoming",
@@ -150,6 +164,8 @@ export default function AdminEvenementsPage() {
           .update({
             ...formData,
             teams_count: Number(formData.teams_count),
+            latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+            longitude: formData.longitude ? parseFloat(formData.longitude) : null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingEvent.id);
@@ -169,6 +185,8 @@ export default function AdminEvenementsPage() {
           ...formData,
           id: `event_${Date.now()}`,
           teams_count: Number(formData.teams_count),
+          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -243,6 +261,13 @@ export default function AdminEvenementsPage() {
       teams_count: event.teams_count,
       prize_pool: event.prize_pool || "",
       location: event.location || "",
+      full_address: (event as any).full_address || "",
+      city: (event as any).city || "",
+      postal_code: (event as any).postal_code || "",
+      country: (event as any).country || "France",
+      venue_name: (event as any).venue_name || "",
+      latitude: (event as any).latitude?.toString() || "",
+      longitude: (event as any).longitude?.toString() || "",
       event_date: event.event_date ? new Date(event.event_date).toISOString().split('T')[0] : "",
       event_time: event.event_time || "",
       status: event.status,
@@ -568,13 +593,93 @@ export default function AdminEvenementsPage() {
                       {/* Détails de l'événement */}
                       <div className="space-y-4">
                         <div>
-                          <label className="text-white font-medium block mb-2">Localisation</label>
+                          <label className="text-white font-medium block mb-2">Localisation (courte)</label>
                           <Input
                             value={formData.location}
                             onChange={(e) => handleInputChange('location', e.target.value)}
                             className="bg-slate-700 border-slate-600 text-white"
                             placeholder="Ex: Paris, En ligne"
                           />
+                        </div>
+
+                        <div>
+                          <label className="text-white font-medium block mb-2">Nom du lieu</label>
+                          <Input
+                            value={formData.venue_name}
+                            onChange={(e) => handleInputChange('venue_name', e.target.value)}
+                            className="bg-slate-700 border-slate-600 text-white"
+                            placeholder="Ex: Accor Arena, Palais des Sports"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-white font-medium block mb-2">Adresse complète</label>
+                          <Input
+                            value={formData.full_address}
+                            onChange={(e) => handleInputChange('full_address', e.target.value)}
+                            className="bg-slate-700 border-slate-600 text-white"
+                            placeholder="Ex: 8 Boulevard de Bercy, 75012 Paris"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-white font-medium block mb-2">Ville</label>
+                            <Input
+                              value={formData.city}
+                              onChange={(e) => handleInputChange('city', e.target.value)}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="Ex: Paris"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-white font-medium block mb-2">Code postal</label>
+                            <Input
+                              value={formData.postal_code}
+                              onChange={(e) => handleInputChange('postal_code', e.target.value)}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="Ex: 75012"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-white font-medium block mb-2">Pays</label>
+                          <Input
+                            value={formData.country}
+                            onChange={(e) => handleInputChange('country', e.target.value)}
+                            className="bg-slate-700 border-slate-600 text-white"
+                            placeholder="Ex: France"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-white font-medium block mb-2">Latitude</label>
+                            <Input
+                              type="number"
+                              step="any"
+                              value={formData.latitude}
+                              onChange={(e) => handleInputChange('latitude', e.target.value)}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="Ex: 48.8399"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-white font-medium block mb-2">Longitude</label>
+                            <Input
+                              type="number"
+                              step="any"
+                              value={formData.longitude}
+                              onChange={(e) => handleInputChange('longitude', e.target.value)}
+                              className="bg-slate-700 border-slate-600 text-white"
+                              placeholder="Ex: 2.3781"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-gray-400 mt-2">
+                          💡 Astuce: Vous pouvez obtenir les coordonnées GPS en recherchant l'adresse sur Google Maps et en cliquant sur le lieu.
                         </div>
 
                         <div>
