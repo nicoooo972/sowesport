@@ -111,15 +111,3 @@ src/
 * Ajouter une fonctionnalité de recherche avancée
 * Optimiser les performances pour les appareils mobiles
 * Création des pages manquantes
-
-## 🤝 Contribuer
-
-Les contributions sont les bienvenues ! Si vous avez des suggestions ou souhaitez signaler des bugs, ouvrez une issue ou soumettez une pull request.
-
-## 📄 Licence
-
-Ce projet est sous licence MIT.
-
-## ❤️ Remerciements
-
-Merci à toute l'équipe de développement et à la communauté Remix pour leur soutien !
