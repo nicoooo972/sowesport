@@ -10,11 +10,16 @@ import { MapPin, Navigation, Users, Euro, Calendar, Clock, Trophy } from 'lucide
 import { supabase } from '@/lib/supabase';
 
 // Import dynamique pour éviter les erreurs SSR
-const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
-const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
-const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
-const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
-const useMap = dynamic(() => import('react-leaflet').then(mod => mod.useMap), { ssr: false });
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => ({ default: mod.MapContainer })), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => ({ default: mod.TileLayer })), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => ({ default: mod.Marker })), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => ({ default: mod.Popup })), { ssr: false });
+
+// useMap doit être importé différemment car c'est un hook
+let useMap: () => any;
+if (typeof window !== 'undefined') {
+  useMap = require('react-leaflet').useMap;
+}
 
 // Interface pour les événements
 interface EventData {
@@ -195,7 +200,7 @@ export function TournamentsMap() {
 
   // Composant pour géolocalisation (doit être dans le MapContainer)
   function LocationMarker() {
-    const map = useMap();
+    const map = useMap ? useMap() : null;
 
     useEffect(() => {
       if (!navigator.geolocation) return;
