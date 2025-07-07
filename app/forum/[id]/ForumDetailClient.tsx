@@ -54,7 +54,7 @@ const formatDate = (dateString: string | null) => {
 };
 
 // --- Composant pour une réponse ---
-function ReplyCard({ reply, onDelete }: { reply: ForumReply & { reply_likes?: { user_id: string }[] }, onDelete: (replyId: string) => void }) {
+function ReplyCard({ reply, onDelete }: { reply: ForumReply, onDelete: (replyId: string) => void }) {
   const { user, profile } = useAuth();
   const { toast } = useToast();
   const [isLiked, setIsLiked] = useState(reply.reply_likes?.some(like => like.user_id === user?.id) || false);

@@ -18,6 +18,7 @@ export interface ForumReply {
   created_at: string;
   like_count: number;
   reply_to_id: string | null;
+  reply_likes?: { user_id: string }[];
 }
 
 export interface ForumCategory {
