@@ -232,10 +232,12 @@ export default function AdminArticlesPage() {
               Gérez les articles et contenus de la plateforme
             </p>
           </div>
-          <Button className="bg-purple-600 hover:bg-purple-700">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvel article
-          </Button>
+          <Link href="/admin/articles/create">
+            <Button className="bg-purple-600 hover:bg-purple-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Nouvel article
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -417,18 +419,23 @@ export default function AdminArticlesPage() {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Ouvrir le menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Voir l'article
+                        <DropdownMenuItem asChild>
+                          <Link href={`/articles/${article.id}`} target="_blank">
+                            <Eye className="mr-2 h-4 w-4" />
+                            Voir
+                          </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Modifier
+                         <DropdownMenuItem asChild>
+                          <Link href={`/admin/articles/${article.id}/edit`}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Modifier
+                          </Link>
                         </DropdownMenuItem>
                         {article.status === "draft" && (
                           <DropdownMenuItem onClick={() => handleArticleAction(article.id, "publish")}>
