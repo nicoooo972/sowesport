@@ -4,49 +4,90 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const articles = [
-  {
-    id: 1,
-    title: 'The Rise of Mobile Esports: A New Era of Competition',
-    category: 'Mobile Gaming',
-    image: 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=800&q=80',
-    excerpt: 'Exploring the explosive growth of mobile esports and its impact on the gaming industry.',
-  },
-  {
-    id: 2,
-    title: 'Top Teams Prepare for World Championship',
-    category: 'Tournament',
-    image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80',
-    excerpt: 'An inside look at how professional teams are preparing for the biggest event of the year.',
-  },
-  {
-    id: 3,
-    title: 'The Evolution of Esports Broadcasting',
-    category: 'Industry',
-    image: 'https://images.unsplash.com/photo-1561489413-985b06da5bee?w=800&q=80',
-    excerpt: 'How streaming technology is transforming the way we watch competitive gaming.',
-  },
-];
+type Article = {
+  id: string;
+  slug: string;
+  title:string;
+  category: string;
+  featured_image: string | null;
+  excerpt: string | null;
+};
 
 export function FeaturedArticles() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('articles')
+        .select('id, slug, title, category, featured_image, excerpt')
+        .eq('is_featured', true)
+        .order('published_at', { ascending: false })
+        .limit(3);
+
+      if (error) {
+        console.error('Error fetching featured articles:', error);
+      } else {
+        setArticles(data as Article[]);
+      }
+      setLoading(false);
+    };
+
+    fetchArticles();
+  }, []);
+
+  if (loading) {
+    return (
+      <section>
+        <h2 className="mb-6 text-3xl font-bold text-foreground bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
+          Articles à la une
+        </h2>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="h-full overflow-hidden">
+              <Skeleton className="h-48 w-full" />
+              <CardHeader>
+                <Skeleton className="h-6 w-24" />
+                <Skeleton className="h-5 w-full mt-2" />
+                <Skeleton className="h-5 w-4/5 mt-1" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full mt-2" />
+                <Skeleton className="h-4 w-2/3 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section>
       <h2 className="mb-6 text-3xl font-bold text-foreground bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-        Featured Articles
+        Articles à la une
       </h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {articles.map((article) => (
-          <Link key={article.id} href={`/articles/${article.id}`}>
+          <Link key={article.id} href={`/articles/${article.slug}`}>
             <Card className="h-full overflow-hidden transition-all hover:scale-[1.02]">
-              <div className="relative h-48 w-full">
-                <Image
-                  src={article.image}
-                  alt={article.title}
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              {article.featured_image && (
+                <div className="relative h-48 w-full">
+                  <Image
+                    src={article.featured_image}
+                    alt={article.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              )}
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <Badge className="bg-primary hover:bg-primary/90 text-primary-foreground">

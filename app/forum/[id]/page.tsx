@@ -6,7 +6,7 @@ export interface ForumAuthor {
   id: string;
   username: string;
   avatar_url: string;
-  role: "ADMIN" | "MODERATOR" | "MEMBER";
+  role: "ADMIN" | "MODERATOR" | "MEMBER" | "ORGANIZER" | "PRO" | "PREMIUM";
   join_date: string;
   post_count: number;
 }

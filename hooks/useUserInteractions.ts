@@ -44,82 +44,59 @@ export const useUserInteractions = () => {
         description: "Vous devez être connecté pour aimer ce contenu.",
         variant: "destructive",
       });
-      return false;
+      return currentlyLiked;
     }
 
     setLoading(true);
-    
+
+    const tableName = contentType === 'article' ? 'articles' : 
+                      contentType === 'interview' ? 'interviews' :
+                      contentType === 'event' ? 'events' :
+                      contentType === 'forumpost' ? 'forum_posts' : null;
+
+    if (!tableName) {
+      toast({ title: "Erreur", description: "Type de contenu invalide.", variant: "destructive" });
+      setLoading(false);
+      return currentlyLiked;
+    }
+
     try {
       if (currentlyLiked) {
-        // Supprimer le like
-        const { error } = await supabase
+        // 1. Supprimer le like de la table de jonction
+        const { error: deleteError } = await supabase
           .from('user_likes')
           .delete()
-          .eq('user_id', user.id)
-          .eq('content_type', contentType)
-          .eq('content_id', contentId);
+          .match({ user_id: user.id, content_type: contentType, content_id: contentId });
 
-        if (error) throw error;
+        if (deleteError) throw deleteError;
 
-        // Décrémenter le compteur dans la table content
-        const tableName = contentType === 'article' ? 'articles' : 
-                         contentType === 'interview' ? 'interviews' : 'events';
-        
-        const { data: currentData } = await supabase
-          .from(tableName)
-          .select('likes')
-          .eq('id', contentId)
-          .single();
-          
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update({ likes: Math.max(0, (currentData?.likes || 0) - 1) })
-          .eq('id', contentId);
-
-        if (updateError) throw updateError;
+        // 2. Si la suppression réussit, décrémenter le compteur via RPC
+        const { error: rpcError } = await supabase.rpc('decrement_likes', { 
+          p_table_name: tableName, 
+          p_content_id: contentId 
+        });
+        if (rpcError) throw rpcError;
 
         await logActivity('unlike', contentType, contentId);
-        
-        toast({
-          title: "Like retiré",
-          description: "Vous n'aimez plus ce contenu.",
-        });
-        
+        toast({ title: "Like retiré" });
+
       } else {
-        // Ajouter le like
-        const { error } = await supabase
+        // 1. Ajouter le like
+        const { error: insertError } = await supabase
           .from('user_likes')
-          .insert({
-            user_id: user.id,
-            content_type: contentType,
-            content_id: contentId
-          });
+          .insert({ user_id: user.id, content_type: contentType, content_id: contentId });
 
-        if (error) throw error;
+        if (insertError) throw insertError;
 
-        // Incrémenter le compteur dans la table content
-        const tableName = contentType === 'article' ? 'articles' : 
-                         contentType === 'interview' ? 'interviews' : 'events';
-        
-        const { data: currentData } = await supabase
-          .from(tableName)
-          .select('likes')
-          .eq('id', contentId)
-          .single();
-          
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update({ likes: (currentData?.likes || 0) + 1 })
-          .eq('id', contentId);
-
-        if (updateError) throw updateError;
+        // 2. Si l'insertion réussit, incrémenter le compteur via RPC
+        const { error: rpcError } = await supabase.rpc('increment_likes', { 
+          p_table_name: tableName, 
+          p_content_id: contentId 
+        });
+        if (rpcError) throw rpcError;
 
         await logActivity('like', contentType, contentId);
-        
-        toast({
-          title: "Contenu aimé",
-          description: "Merci pour votre soutien !",
-        });
+        toast({ title: "Contenu aimé !" });
       }
 
       return !currentlyLiked;
@@ -127,7 +104,7 @@ export const useUserInteractions = () => {
       console.error('Erreur lors du toggle like:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de traiter votre demande.",
+        description: "Impossible de traiter votre demande pour le moment.",
         variant: "destructive",
       });
       return currentlyLiked;

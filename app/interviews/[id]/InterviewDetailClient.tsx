@@ -1,396 +1,409 @@
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, Heart, Eye, Calendar, Clock, Play, User, Trophy, Share2, Twitter, Facebook, Linkedin } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useState } from 'react';
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { InterviewDetail, Question } from "./page";
+import { generateHTML } from '@tiptap/html';
+import Document from '@tiptap/extension-document';
+import Paragraph from '@tiptap/extension-paragraph';
+import Text from '@tiptap/extension-text';
+import Heading from '@tiptap/extension-heading';
+import Bold from '@tiptap/extension-bold';
+import Italic from '@tiptap/extension-italic';
+import LinkExtension from '@tiptap/extension-link';
+import { 
+  Clock, 
+  Eye, 
+  Heart, 
+  Share2, 
+  Calendar,
+  Trophy,
+  Play,
+  ChevronDown,
+  ChevronUp,
+  Users
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// Composant pour afficher une question/réponse
-function QuestionCard({ question }: { question: Question }) {
+function InterviewContent({ content }: { content: string | null }) {
+  const output = useMemo(() => {
+    if (!content) return '';
+    try {
+      const jsonContent = typeof content === 'string' ? JSON.parse(content) : content;
+      
+      return generateHTML(jsonContent, [
+        Document,
+        Paragraph,
+        Text,
+        Heading.configure({ levels: [1, 2, 3] }),
+        Bold,
+        Italic,
+        LinkExtension.configure({
+          openOnClick: true,
+          autolink: true,
+          HTMLAttributes: {
+            class: 'text-primary hover:underline transition-colors',
+          },
+        }),
+      ]);
+    } catch (e) {
+      console.error("Erreur de parsing du contenu de l'interview:", e);
+      return `<p>${content}</p>`;
+    }
+  }, [content]);
+
   return (
-    <Card className="bg-slate-800/50 border-slate-700">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          {/* Question */}
-          <div>
-            <div className="flex items-start gap-3">
-              <div className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">
-                Q
-              </div>
-              <div className="flex-1">
-                <p className="text-white font-medium text-lg leading-relaxed">
-                  {question.question}
-                </p>
-                {question.timestamp && (
-                  <div className="flex items-center gap-1 text-purple-400 text-sm mt-2">
-                    <Clock className="w-3 h-3" />
-                    <span>{question.timestamp}</span>
+    <div 
+      className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground leading-relaxed" 
+      dangerouslySetInnerHTML={{ __html: output }} 
+    />
+  );
+}
+
+function QuestionAccordion({ question, index }: { question: Question, index: number }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className="group"
+    >
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md border-l-4 border-l-primary/20 hover:border-l-primary">
+        <CardHeader 
+          className="cursor-pointer select-none hover:bg-muted/50 transition-colors"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold pr-4 leading-relaxed">
+              {question.question}
+            </CardTitle>
+            <motion.div
+              animate={{ rotate: isOpen ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              className="flex-shrink-0"
+            >
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            </motion.div>
+          </div>
+        </CardHeader>
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <CardContent className="pt-0 pb-6">
+                <div className="border-l-2 border-primary/20 pl-4">
+                  <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                    {question.answer}
+                  </p>
+                  {question.timestamp_video && (
+                    <div className="mt-4 flex items-center gap-2 text-sm text-primary">
+                      <Play className="h-4 w-4" />
+                      <span>Timestamp: {question.timestamp_video}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Card>
+    </motion.div>
+  );
+}
+
+export default function InterviewDetailClient({ 
+  interview, 
+  questions 
+}: { 
+  interview: InterviewDetail, 
+  questions: Question[] 
+}) {
+  const [isLiked, setIsLiked] = useState(false);
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: interview.title,
+          text: interview.description || '',
+          url: window.location.href,
+        });
+      } catch (err) {
+        console.log('Partage annulé');
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      {/* Hero Section */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+        className="relative"
+      >
+        {interview.thumbnail && (
+          <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden">
+            <Image
+              src={interview.thumbnail}
+              alt={interview.title}
+              fill
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            
+            {/* Play button for video interviews */}
+            {interview.is_video && interview.video_url && (
+              <motion.div 
+                className="absolute inset-0 flex items-center justify-center"
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button 
+                  size="lg" 
+                  className="rounded-full h-20 w-20 bg-primary/90 hover:bg-primary shadow-2xl"
+                >
+                  <Play className="h-8 w-8 ml-1" fill="currentColor" />
+                </Button>
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        {/* Content overlay */}
+        <div className="relative -mt-32 md:-mt-40 z-10 px-4 md:px-6">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.6 }}
+              className="bg-background/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border"
+            >
+              <div className="text-center space-y-4">
+                <Badge variant="secondary" className="text-sm font-medium">
+                  {interview.category}
+                </Badge>
+                
+                <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
+                  {interview.title}
+                </h1>
+                
+                {interview.description && (
+                  <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                    {interview.description}
+                  </p>
+                )}
+
+                {/* Tags */}
+                {interview.tags.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2 pt-4">
+                    {interview.tags.map((tag, index) => (
+                      <Badge key={index} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Réponse */}
-          <div>
-            <div className="flex items-start gap-3">
-              <div className="bg-slate-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 mt-1">
-                R
-              </div>
-              <div className="flex-1">
-                <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">
-                  {question.answer}
-                </p>
-              </div>
-            </div>
+            </motion.div>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
+      </motion.div>
 
-// Composant pour le profil de l'interviewé
-function IntervieweeProfile({ interviewee }: { interviewee: InterviewDetail["interviewee"] }) {
-  return (
-    <Card className="bg-slate-800/50 border-slate-700">
-      <CardHeader>
-        <CardTitle className="text-white text-xl">À propos de l'interviewé</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-start gap-4 mb-6">
-          <div className="relative w-16 h-16 rounded-full overflow-hidden bg-slate-700 flex-shrink-0">
-            <Image
-              src={interviewee.avatar}
-              alt={`${interviewee.name} avatar`}
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div>
-            <h3 className="text-white font-bold text-lg">{interviewee.name}</h3>
-            <p className="text-purple-400 font-medium">{interviewee.role}</p>
-            {interviewee.team && (
-              <p className="text-gray-400">{interviewee.team}</p>
-            )}
-          </div>
-        </div>
-
-        <p className="text-gray-200 leading-relaxed mb-6">
-          {interviewee.bio}
-        </p>
-
-        <div>
-          <h4 className="text-white font-bold mb-3 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-yellow-500" />
-            Principales réalisations
-          </h4>
-          <ul className="space-y-2">
-            {interviewee.achievements.map((achievement, index) => (
-              <li key={index} className="flex items-center gap-2 text-gray-200">
-                <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0" />
-                {achievement}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Composant pour le lecteur vidéo (placeholder)
-function VideoPlayer({ videoUrl, thumbnail, title }: { videoUrl?: string; thumbnail: string; title: string }) {
-  const [isPlaying, setIsPlaying] = useState(false);
-
-  return (
-    <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-      {!isPlaying ? (
-        <>
-          <Image
-            src={thumbnail}
-            alt={title}
-            fill
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-            <Button
-              size="lg"
-              className="bg-red-600 hover:bg-red-700 text-white rounded-full w-16 h-16 p-0"
-              onClick={() => setIsPlaying(true)}
-            >
-              <Play className="w-6 h-6 ml-1" />
-            </Button>
-          </div>
-        </>
-      ) : (
-        <div className="w-full h-full bg-black flex items-center justify-center">
-          <p className="text-white">Lecteur vidéo (placeholder)</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface InterviewDetailClientProps {
-  interview: InterviewDetail;
-  questions: Question[];
-}
-
-export default function InterviewDetailClient({ interview, questions }: InterviewDetailClientProps) {
-  const [isLiked, setIsLiked] = useState(interview.isLiked);
-  const [likes, setLikes] = useState(interview.likes);
-  const [showShareMenu, setShowShareMenu] = useState(false);
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "League of Legends": return "bg-blue-600";
-      case "Valorant": return "bg-red-600";
-      case "Rocket League": return "bg-orange-600";
-      case "Industrie": return "bg-purple-600";
-      default: return "bg-gray-600";
-    }
-  };
-
-  const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikes(isLiked ? likes - 1 : likes + 1);
-  };
-
-  const handleShare = (platform: string) => {
-    const url = window.location.href;
-    const text = `${interview.title} - Interview exclusive sur SowEsport`;
-    
-    switch (platform) {
-      case "twitter":
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`);
-        break;
-      case "facebook":
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`);
-        break;
-      case "linkedin":
-        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`);
-        break;
-    }
-    setShowShareMenu(false);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-violet-900">
-      {/* Header avec bouton retour */}
-      <div className="pt-20 pb-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <Link href="/interviews">
-            <Button 
-              variant="ghost" 
-              className="text-white hover:bg-white/10 mb-6 p-0 h-auto font-normal"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour aux interviews
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Contenu principal */}
-      <div className="max-w-6xl mx-auto px-4 pb-16">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Colonne principale */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Header de l'interview */}
-            <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-              <CardContent className="p-8">
-                <div className="space-y-6">
-                  {/* Titre et métadonnées */}
-                  <div>
-                    <div className="flex items-center gap-4 mb-4">
-                      <Badge className={`${getCategoryColor(interview.category)} text-white`}>
-                        {interview.category}
-                      </Badge>
-                      {interview.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="border-purple-500 text-purple-400">
-                          #{tag}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                      {interview.title}
-                    </h1>
-
-                    <p className="text-xl text-gray-300 leading-relaxed mb-6">
-                      {interview.description}
-                    </p>
-
-                    {/* Statistiques et actions */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-6 text-gray-400">
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-4 h-4" />
-                          <span>{interview.views.toLocaleString()} vues</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>Publié {interview.publishedAt}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          <span>{interview.duration} de lecture</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          className={`text-gray-400 hover:text-white ${isLiked ? 'text-red-500' : ''}`}
-                          onClick={handleLike}
-                        >
-                          <Heart className={`w-4 h-4 mr-2 ${isLiked ? 'fill-current' : ''}`} />
-                          {likes}
-                        </Button>
-                        <div className="relative">
-                          <Button
-                            variant="ghost"
-                            className="text-gray-400 hover:text-white"
-                            onClick={() => setShowShareMenu(!showShareMenu)}
-                          >
-                            <Share2 className="w-4 h-4 mr-2" />
-                            Partager
-                          </Button>
-                          {showShareMenu && (
-                            <div className="absolute top-full right-0 mt-2 bg-slate-800 border border-slate-700 rounded-lg p-2 space-y-1 z-10">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-white hover:bg-slate-700"
-                                onClick={() => handleShare("twitter")}
-                              >
-                                <Twitter className="w-4 h-4 mr-2" />
-                                Twitter
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-white hover:bg-slate-700"
-                                onClick={() => handleShare("facebook")}
-                              >
-                                <Facebook className="w-4 h-4 mr-2" />
-                                Facebook
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="w-full justify-start text-white hover:bg-slate-700"
-                                onClick={() => handleShare("linkedin")}
-                              >
-                                <Linkedin className="w-4 h-4 mr-2" />
-                                LinkedIn
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator className="bg-slate-700" />
-
-                  {/* Informations sur l'interview */}
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-10 h-10 rounded-full overflow-hidden bg-slate-700">
-                        <Image
-                          src={interview.interviewer.avatar}
-                          alt={`${interview.interviewer.name} avatar`}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-gray-400 text-sm">Interviewé par</p>
-                        <p className="text-white font-medium">{interview.interviewer.name}</p>
-                      </div>
+      {/* Main Content */}
+      <div className="max-w-4xl mx-auto px-4 md:px-6 pb-12">
+        {/* Interview Metadata */}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          className="mt-8 mb-12"
+        >
+          <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm">
+            <CardContent className="p-8">
+              {/* Participants */}
+              <div className="grid md:grid-cols-2 gap-8 mb-8">
+                {/* Interviewer */}
+                <div className="text-center">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-16 w-16 ring-4 ring-background shadow-lg">
+                      <AvatarImage src={interview.interviewer_avatar || undefined} />
+                      <AvatarFallback className="text-lg font-semibold">
+                        {interview.interviewer_name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold text-lg">{interview.interviewer_name}</h3>
+                      <p className="text-sm text-muted-foreground">Interviewer</p>
                     </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Lecteur vidéo si c'est une interview vidéo */}
-            {interview.isVideo && (
-              <Card className="bg-slate-800/50 border-slate-700">
-                <CardContent className="p-6">
-                  <VideoPlayer
-                    videoUrl={interview.videoUrl}
-                    thumbnail={interview.thumbnail}
-                    title={interview.title}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Contenu de l'interview */}
-            <Card className="bg-slate-800/50 border-slate-700">
-              <CardContent className="p-8">
-                <div className="prose prose-invert max-w-none">
-                  <div className="text-gray-200 leading-relaxed whitespace-pre-wrap text-lg">
-                    {interview.content}
+                {/* Interviewee */}
+                <div className="text-center">
+                  <div className="flex flex-col items-center space-y-4">
+                    <Avatar className="h-16 w-16 ring-4 ring-primary/20 shadow-lg">
+                      <AvatarImage src={interview.interviewee_avatar || undefined} />
+                      <AvatarFallback className="text-lg font-semibold">
+                        {interview.interviewee_name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold text-lg">{interview.interviewee_name}</h3>
+                      <p className="text-sm text-primary font-medium">{interview.interviewee_role}</p>
+                      {interview.interviewee_team && (
+                        <p className="text-xs text-muted-foreground flex items-center justify-center gap-1 mt-1">
+                          <Users className="h-3 w-3" />
+                          {interview.interviewee_team}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Questions et réponses */}
-            {questions.length > 0 && (
-              <div className="space-y-6">
-                <h2 className="text-white text-2xl font-bold">
-                  Questions & Réponses
-                </h2>
-                <div className="space-y-4">
-                  {questions.map((question) => (
-                    <QuestionCard key={question.id} question={question} />
-                  ))}
+              {/* Stats & Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t">
+                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{interview.published_at}</span>
+                  </div>
+                  {interview.duration && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{interview.duration}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Eye className="h-4 w-4" />
+                    <span>{interview.views.toLocaleString()} vues</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsLiked(!isLiked)}
+                    className="gap-2"
+                  >
+                    <Heart 
+                      className={`h-4 w-4 transition-colors ${isLiked ? 'fill-red-500 text-red-500' : ''}`} 
+                    />
+                    <span>{interview.likes + (isLiked ? 1 : 0)}</span>
+                  </Button>
+                  
+                  <Button variant="ghost" size="sm" onClick={handleShare} className="gap-2">
+                    <Share2 className="h-4 w-4" />
+                    <span>Partager</span>
+                  </Button>
                 </div>
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Profil de l'interviewé */}
-            <IntervieweeProfile interviewee={interview.interviewee} />
-
-            {/* Interviews similaires */}
-            <Card className="bg-slate-800/50 border-slate-700">
+        {/* Bio Section */}
+        {interview.interviewee_bio && (
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="mb-12"
+          >
+            <Card className="border-0 shadow-lg">
               <CardHeader>
-                <CardTitle className="text-white text-xl">Interviews similaires</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-primary" />
+                  À propos de {interview.interviewee_name}
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {interview.relatedInterviews.slice(0, 3).map((relatedId, index) => (
-                    <Link key={relatedId} href={`/interviews/${relatedId}`}>
-                      <div className="group cursor-pointer">
-                        <div className="bg-slate-700/50 rounded-lg p-4 group-hover:bg-slate-700 transition-colors">
-                          <p className="text-white font-medium group-hover:text-purple-400 transition-colors">
-                            Interview #{index + 1}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            Cliquez pour découvrir
-                          </p>
+                <p className="text-muted-foreground leading-relaxed mb-6">
+                  {interview.interviewee_bio}
+                </p>
+                
+                {interview.interviewee_achievements.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold mb-3 text-sm uppercase tracking-wide text-muted-foreground">
+                      Réalisations
+                    </h4>
+                    <div className="grid gap-2">
+                      {interview.interviewee_achievements.map((achievement, index) => (
+                        <div key={index} className="flex items-start gap-3">
+                          <div className="h-2 w-2 rounded-full bg-primary mt-2 flex-shrink-0" />
+                          <p className="text-sm text-muted-foreground">{achievement}</p>
                         </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          </div>
-        </div>
+          </motion.div>
+        )}
+
+        {/* Main Content */}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+          className="mb-12"
+        >
+          <Card className="border-0 shadow-lg">
+            <CardContent className="p-8">
+              <InterviewContent content={interview.content} />
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Questions Section */}
+        {questions && questions.length > 0 && (
+          <motion.div
+            initial={{ y: 30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.7, duration: 0.6 }}
+          >
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4">Questions & Réponses</h2>
+              <p className="text-muted-foreground">
+                Découvrez les réponses détaillées aux questions les plus importantes
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              {questions.map((question, index) => (
+                <QuestionAccordion 
+                  key={question.id} 
+                  question={question} 
+                  index={index}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );

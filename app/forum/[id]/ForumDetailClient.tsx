@@ -32,6 +32,9 @@ const getRoleColor = (role: string) => {
   switch (role) {
     case "ADMIN": return "bg-red-600";
     case "MODERATOR": return "bg-blue-600";
+    case "ORGANIZER": return "bg-orange-500";
+    case "PRO": return "bg-yellow-500";
+    case "PREMIUM": return "bg-indigo-500";
     default: return "bg-gray-600";
   }
 };
@@ -40,6 +43,9 @@ const getRoleText = (role: string) => {
   switch (role) {
     case "ADMIN": return "Admin";
     case "MODERATOR": return "Modérateur";
+    case "ORGANIZER": return "Organisateur";
+    case "PRO": return "Joueur Pro";
+    case "PREMIUM": return "Premium";
     default: return "Membre";
   }
 };
