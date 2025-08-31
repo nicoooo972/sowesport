@@ -49,26 +49,11 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { products as dataProducts, type Product } from "./data";
 
 // Types pour les produits
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  originalPrice?: number;
-  images: string[];
-  category: "t-shirt" | "sweat" | "accessoire" | "casquette";
-  sizes: string[];
-  colors: string[];
-  inStock: boolean;
-  featured: boolean;
-  rating: number;
-  reviews: number;
-  tags: string[];
-  material: string;
-  care: string[];
-}
+// Product type and data moved to ./data
 
 interface CartItem {
   product: Product;
@@ -78,133 +63,7 @@ interface CartItem {
 }
 
 // Données enrichies pour les produits
-const products: Product[] = [
-  {
-    id: "1",
-    name: "T-Shirt SowEsport Classic",
-    description:
-      "T-shirt officiel en coton bio premium avec logo brodé. Coupe moderne et confortable pour les gamers.",
-    price: 29.99,
-    originalPrice: 39.99,
-    images: [
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&h=600&fit=crop&crop=center",
-      "https://images.unsplash.com/photo-1503341504253-dff4815485f1?w=600&h=600&fit=crop&crop=center",
-      "https://images.unsplash.com/photo-1562157873-818bc0726f68?w=600&h=600&fit=crop&crop=center",
-    ],
-    category: "t-shirt",
-    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    colors: ["Noir", "Blanc", "Violet", "Gris"],
-    inStock: true,
-    featured: true,
-    rating: 4.8,
-    reviews: 156,
-    tags: ["Bestseller", "Coton Bio", "Édition Limitée"],
-    material: "100% Coton Bio",
-    care: ["Lavage 30°C", "Pas de sèche-linge", "Repassage à l'envers"],
-  },
-  {
-    id: "2",
-    name: "T-Shirt Gaming Elite",
-    description:
-      "T-shirt technique avec fibres anti-transpiration pour les sessions gaming intensives.",
-    price: 34.99,
-    images: [
-      "https://images.unsplash.com/photo-1583743814966-8936f37f4ad2?w=600&h=600&fit=crop&crop=center",
-      "https://images.unsplash.com/photo-1571455786673-9d9d6c194f90?w=600&h=600&fit=crop&crop=center",
-    ],
-    category: "t-shirt",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Noir", "Bleu Marine", "Rouge"],
-    inStock: true,
-    featured: false,
-    rating: 4.6,
-    reviews: 89,
-    tags: ["Tech", "Anti-transpiration"],
-    material: "Polyester recyclé",
-    care: ["Lavage 40°C", "Séchage rapide"],
-  },
-  {
-    id: "3",
-    name: "Sweat SowEsport Pro",
-    description:
-      "Sweat à capuche premium avec doublure polaire et poche kangourou. Design exclusif SowEsport.",
-    price: 59.99,
-    originalPrice: 79.99,
-    images: [
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=600&h=600&fit=crop&crop=center",
-      "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=600&h=600&fit=crop&crop=center",
-    ],
-    category: "sweat",
-    sizes: ["S", "M", "L", "XL", "XXL"],
-    colors: ["Noir", "Gris", "Violet", "Blanc"],
-    inStock: true,
-    featured: true,
-    rating: 4.9,
-    reviews: 203,
-    tags: ["Premium", "Doublure Polaire", "Bestseller"],
-    material: "80% Coton, 20% Polyester",
-    care: ["Lavage 30°C", "Séchage doux"],
-  },
-  {
-    id: "4",
-    name: "Casquette Gaming",
-    description:
-      "Casquette ajustable avec logo SowEsport brodé. Parfaite pour représenter votre passion gaming.",
-    price: 24.99,
-    images: [
-      "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&h=600&fit=crop&crop=center",
-    ],
-    category: "casquette",
-    sizes: ["Unique"],
-    colors: ["Noir", "Blanc", "Violet"],
-    inStock: true,
-    featured: false,
-    rating: 4.5,
-    reviews: 67,
-    tags: ["Ajustable", "Logo Brodé"],
-    material: "100% Coton",
-    care: ["Lavage à la main"],
-  },
-  {
-    id: "5",
-    name: "Sweat Gaming Zone",
-    description: "Sweat crewneck minimaliste pour un style gaming décontracté.",
-    price: 49.99,
-    images: [
-      "https://images.unsplash.com/photo-1620012253295-c15cc3e65df4?w=600&h=600&fit=crop&crop=center",
-    ],
-    category: "sweat",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Gris", "Noir", "Beige"],
-    inStock: false,
-    featured: false,
-    rating: 4.4,
-    reviews: 45,
-    tags: ["Minimaliste", "Crewneck"],
-    material: "Mélange Coton",
-    care: ["Lavage 30°C"],
-  },
-  {
-    id: "6",
-    name: "T-Shirt Retro Gaming",
-    description:
-      "Design rétro inspiré des jeux vidéo classiques. Édition limitée collector.",
-    price: 32.99,
-    images: [
-      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?w=600&h=600&fit=crop&crop=center",
-    ],
-    category: "t-shirt",
-    sizes: ["S", "M", "L", "XL"],
-    colors: ["Noir", "Blanc"],
-    inStock: true,
-    featured: false,
-    rating: 4.7,
-    reviews: 112,
-    tags: ["Rétro", "Collector", "Édition Limitée"],
-    material: "Coton Premium",
-    care: ["Lavage 30°C", "Repassage à l'envers"],
-  },
-];
+const products: Product[] = dataProducts;
 
 // Composant ProductCard amélioré
 function ProductCard({
@@ -235,308 +94,337 @@ function ProductCard({
 
   if (viewMode === "list") {
     return (
-      <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-300">
-        <CardContent className="p-6">
-          <div className="flex gap-6">
-            <div className="relative w-32 h-32 flex-shrink-0">
-              <Image
-                src={product.images[0]}
-                alt={product.name}
-                fill
-                className="object-cover rounded-lg"
-              />
-              {!product.inStock && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
-                  <Badge variant="destructive">Rupture</Badge>
-                </div>
-              )}
-            </div>
-
-            <div className="flex-1 space-y-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold text-lg">{product.name}</h3>
-                  <p className="text-muted-foreground text-sm">
-                    {product.description}
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onToggleFavorite(product.id)}
-                  className="text-muted-foreground hover:text-red-500"
-                >
-                  <Heart
-                    className={`h-5 w-5 ${
-                      isFavorite ? "fill-red-500 text-red-500" : ""
-                    }`}
-                  />
-                </Button>
+      <Link href={`/boutique/${product.slug}`}>
+        <Card className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-lg transition-all duration-300">
+          <CardContent className="p-6">
+            <div className="flex gap-6">
+              <div className="relative w-32 h-32 flex-shrink-0">
+                <Image
+                  src={product.images[0]}
+                  alt={product.name}
+                  fill
+                  className="object-cover rounded-lg"
+                />
+                {!product.inStock && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                    <Badge variant="destructive">Rupture</Badge>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < Math.floor(product.rating)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
+              <div className="flex-1 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-bold text-lg">{product.name}</h3>
+                    <p className="text-muted-foreground text-sm">
+                      {product.description}
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onToggleFavorite(product.id);
+                    }}
+                    className="text-muted-foreground hover:text-red-500"
+                  >
+                    <Heart
+                      className={`h-5 w-5 ${
+                        isFavorite ? "fill-red-500 text-red-500" : ""
                       }`}
                     />
-                  ))}
-                  <span className="text-sm text-muted-foreground ml-2">
-                    {product.rating} ({product.reviews} avis)
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1">
-                {product.tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {product.originalPrice && (
-                    <span className="text-muted-foreground line-through text-sm">
-                      {product.originalPrice.toFixed(2)}€
-                    </span>
-                  )}
-                  <span className="text-2xl font-bold">
-                    {product.price.toFixed(2)}€
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Select value={selectedSize} onValueChange={setSelectedSize}>
-                    <SelectTrigger className="w-20">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {product.sizes.map((size) => (
-                        <SelectItem key={size} value={size}>
-                          {size}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Button
-                    onClick={handleAddToCart}
-                    disabled={!product.inStock}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Ajouter
                   </Button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-4 w-4 ${
+                          i < Math.floor(product.rating)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                    <span className="text-sm text-muted-foreground ml-2">
+                      {product.rating} ({product.reviews} avis)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                  {product.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {product.originalPrice && (
+                      <span className="text-muted-foreground line-through text-sm">
+                        {product.originalPrice.toFixed(2)}€
+                      </span>
+                    )}
+                    <span className="text-2xl font-bold">
+                      {product.price.toFixed(2)}€
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={selectedSize}
+                      onValueChange={setSelectedSize}
+                    >
+                      <SelectTrigger className="w-20">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {product.sizes.map((size) => (
+                          <SelectItem key={size} value={size}>
+                            {size}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddToCart();
+                      }}
+                      disabled={!product.inStock}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <ShoppingCart className="h-4 w-4 mr-2" />
+                      Ajouter
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Link>
     );
   }
 
   return (
-    <Card className="group bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 overflow-hidden">
-      <div className="relative">
-        <div
-          className="relative h-80 cursor-pointer"
-          onMouseEnter={() => setCurrentImageIndex(1)}
-          onMouseLeave={() => setCurrentImageIndex(0)}
-        >
-          <Image
-            src={product.images[currentImageIndex] || product.images[0]}
-            alt={product.name}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-          />
+    <Link href={`/boutique/${product.slug}`}>
+      <Card className="group bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:shadow-xl transition-all duration-300 overflow-hidden">
+        <div className="relative">
+          <div
+            className="relative h-80 cursor-pointer"
+            onMouseEnter={() => setCurrentImageIndex(1)}
+            onMouseLeave={() => setCurrentImageIndex(0)}
+          >
+            <Image
+              src={product.images[currentImageIndex] || product.images[0]}
+              alt={product.name}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
 
-          {/* Badges */}
-          <div className="absolute top-3 left-3 flex flex-col gap-2">
-            {product.featured && (
-              <Badge className="bg-yellow-500 text-black">⭐ Bestseller</Badge>
+            {/* Badges */}
+            <div className="absolute top-3 left-3 flex flex-col gap-2">
+              {product.featured && (
+                <Badge className="bg-yellow-500 text-black">
+                  ⭐ Bestseller
+                </Badge>
+              )}
+              {product.originalPrice && (
+                <Badge variant="destructive">
+                  -
+                  {Math.round(
+                    ((product.originalPrice - product.price) /
+                      product.originalPrice) *
+                      100
+                  )}
+                  %
+                </Badge>
+              )}
+              {!product.inStock && <Badge variant="secondary">Rupture</Badge>}
+            </div>
+
+            {/* Actions overlay */}
+            <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onToggleFavorite(product.id);
+                }}
+                className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
+              >
+                <Heart
+                  className={`h-4 w-4 ${
+                    isFavorite ? "fill-red-500 text-red-500" : ""
+                  }`}
+                />
+              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={(e) => e.preventDefault()}
+                    className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl">
+                  <ProductQuickView
+                    product={product}
+                    onAddToCart={onAddToCart}
+                  />
+                </DialogContent>
+              </Dialog>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={(e) => e.preventDefault()}
+                className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
+              >
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Image indicators */}
+            {product.images.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
+                {product.images.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full ${
+                      index === currentImageIndex ? "bg-white" : "bg-white/50"
+                    }`}
+                  />
+                ))}
+              </div>
             )}
-            {product.originalPrice && (
-              <Badge variant="destructive">
-                -
-                {Math.round(
-                  ((product.originalPrice - product.price) /
-                    product.originalPrice) *
-                    100
-                )}
-                %
-              </Badge>
-            )}
-            {!product.inStock && <Badge variant="secondary">Rupture</Badge>}
+          </div>
+        </div>
+
+        <CardContent className="p-4 space-y-3">
+          <div>
+            <h3 className="font-bold text-lg line-clamp-1">{product.name}</h3>
+            <p className="text-muted-foreground text-sm line-clamp-2">
+              {product.description}
+            </p>
           </div>
 
-          {/* Actions overlay */}
-          <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => onToggleFavorite(product.id)}
-              className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
-            >
-              <Heart
-                className={`h-4 w-4 ${
-                  isFavorite ? "fill-red-500 text-red-500" : ""
-                }`}
-              />
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl">
-                <ProductQuickView product={product} onAddToCart={onAddToCart} />
-              </DialogContent>
-            </Dialog>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-10 w-10 p-0 bg-white/90 hover:bg-white"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Image indicators */}
-          {product.images.length > 1 && (
-            <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
-              {product.images.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full ${
-                    index === currentImageIndex ? "bg-white" : "bg-white/50"
+          <div className="flex items-center gap-2">
+            <div className="flex items-center">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-4 w-4 ${
+                    i < Math.floor(product.rating)
+                      ? "fill-yellow-400 text-yellow-400"
+                      : "text-gray-300"
                   }`}
                 />
               ))}
             </div>
-          )}
-        </div>
-      </div>
-
-      <CardContent className="p-4 space-y-3">
-        <div>
-          <h3 className="font-bold text-lg line-clamp-1">{product.name}</h3>
-          <p className="text-muted-foreground text-sm line-clamp-2">
-            {product.description}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="flex items-center">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-4 w-4 ${
-                  i < Math.floor(product.rating)
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
-          </div>
-          <span className="text-sm text-muted-foreground">
-            ({product.reviews})
-          </span>
-        </div>
-
-        <div className="flex flex-wrap gap-1">
-          {product.tags.slice(0, 2).map((tag) => (
-            <Badge key={tag} variant="secondary" className="text-xs">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div>
-            {product.originalPrice && (
-              <span className="text-muted-foreground line-through text-sm block">
-                {product.originalPrice.toFixed(2)}€
-              </span>
-            )}
-            <span className="text-xl font-bold">
-              {product.price.toFixed(2)}€
+            <span className="text-sm text-muted-foreground">
+              ({product.reviews})
             </span>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <Select value={selectedSize} onValueChange={setSelectedSize}>
-              <SelectTrigger className="flex-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {product.sizes.map((size) => (
-                  <SelectItem key={size} value={size}>
-                    {size}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-wrap gap-1">
+            {product.tags.slice(0, 2).map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
 
-            <div className="flex gap-1">
-              {product.colors.slice(0, 3).map((color) => (
-                <button
-                  key={color}
-                  onClick={() => setSelectedColor(color)}
-                  className={`w-8 h-8 rounded-full border-2 ${
-                    selectedColor === color
-                      ? "border-purple-500"
-                      : "border-gray-300"
-                  }`}
-                  style={{
-                    backgroundColor:
-                      color.toLowerCase() === "noir"
-                        ? "#000"
-                        : color.toLowerCase() === "blanc"
-                        ? "#fff"
-                        : color.toLowerCase() === "violet"
-                        ? "#8b5cf6"
-                        : color.toLowerCase() === "gris"
-                        ? "#6b7280"
-                        : color.toLowerCase() === "rouge"
-                        ? "#ef4444"
-                        : color.toLowerCase() === "bleu marine"
-                        ? "#1e3a8a"
-                        : color.toLowerCase() === "beige"
-                        ? "#d2b48c"
-                        : "#6b7280",
-                  }}
-                  title={color}
-                />
-              ))}
+          <div className="flex items-center justify-between">
+            <div>
+              {product.originalPrice && (
+                <span className="text-muted-foreground line-through text-sm block">
+                  {product.originalPrice.toFixed(2)}€
+                </span>
+              )}
+              <span className="text-xl font-bold">
+                {product.price.toFixed(2)}€
+              </span>
             </div>
           </div>
 
-          <Button
-            className="w-full bg-purple-600 hover:bg-purple-700"
-            disabled={!product.inStock}
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            {product.inStock ? "Ajouter au panier" : "Rupture de stock"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <Select value={selectedSize} onValueChange={setSelectedSize}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {product.sizes.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="flex gap-1">
+                {product.colors.slice(0, 3).map((color) => (
+                  <button
+                    key={color}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedColor(color);
+                    }}
+                    className={`w-8 h-8 rounded-full border-2 ${
+                      selectedColor === color
+                        ? "border-purple-500"
+                        : "border-gray-300"
+                    }`}
+                    style={{
+                      backgroundColor:
+                        color.toLowerCase() === "noir"
+                          ? "#000"
+                          : color.toLowerCase() === "blanc"
+                          ? "#fff"
+                          : color.toLowerCase() === "violet"
+                          ? "#8b5cf6"
+                          : color.toLowerCase() === "gris"
+                          ? "#6b7280"
+                          : color.toLowerCase() === "rouge"
+                          ? "#ef4444"
+                          : color.toLowerCase() === "bleu marine"
+                          ? "#1e3a8a"
+                          : color.toLowerCase() === "beige"
+                          ? "#d2b48c"
+                          : "#6b7280",
+                    }}
+                    title={color}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <Button
+              className="w-full bg-purple-600 hover:bg-purple-700"
+              disabled={!product.inStock}
+              onClick={(e) => {
+                e.preventDefault();
+                handleAddToCart();
+              }}
+            >
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              {product.inStock ? "Ajouter au panier" : "Rupture de stock"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
@@ -1241,7 +1129,7 @@ export default function BoutiquePage() {
               </div>
               <h3 className="font-bold text-lg mb-2">Livraison gratuite</h3>
               <p className="text-muted-foreground">
-                À partir de 50€ d'achat en France métropolitaine
+                À partir de 50€ d&apos;achat en France métropolitaine
               </p>
             </div>
 
@@ -1251,7 +1139,7 @@ export default function BoutiquePage() {
               </div>
               <h3 className="font-bold text-lg mb-2">Retours gratuits</h3>
               <p className="text-muted-foreground">
-                30 jours pour changer d'avis, retours gratuits
+                30 jours pour changer d&apos;avis, retours gratuits
               </p>
             </div>
 
