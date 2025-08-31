@@ -35,30 +35,43 @@ export interface Question {
 }
 
 // Page serveur principale
-export default async function InterviewDetailPage({ params }: { params: { id: string } }) {
-  const { data: interview, error: interviewError } = await supabase
-    .from('interviews')
-    .select('*')
-    .eq('id', params.id)
+export default async function InterviewDetailPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  let { data: interview, error: interviewError } = await supabase
+    .from("interviews")
+    .select("*")
+    .eq("id", params.id)
     .single();
 
   if (interviewError || !interview) {
-    console.error('Error fetching interview:', interviewError);
+    const fallback = await supabase
+      .from("interviews")
+      .select("*")
+      .eq("slug", params.id)
+      .single();
+
+    interview = fallback.data as any;
+    interviewError = fallback.error as any;
+  }
+
+  if (interviewError || !interview) {
+    console.error("Error fetching interview:", interviewError);
     notFound();
   }
 
   const { data: questions, error: questionsError } = await supabase
-    .from('interview_questions')
-    .select('*')
-    .eq('interview_id', params.id)
-    .order('order_index', { ascending: true });
+    .from("interview_questions")
+    .select("*")
+    .eq("interview_id", interview.id)
+    .order("order_index", { ascending: true });
 
   if (questionsError) {
-    console.error('Error fetching interview questions:', questionsError);
-    // On peut choisir de continuer sans les questions ou de renvoyer une erreur
+    console.error("Error fetching interview questions:", questionsError);
   }
 
-  // Adapter les données de la BDD à l'interface attendue par le client
   const formattedInterview: InterviewDetail = {
     id: interview.id,
     title: interview.title,
@@ -74,8 +87,10 @@ export default async function InterviewDetailPage({ params }: { params: { id: st
     interviewer_avatar: interview.interviewer_avatar,
     category: interview.category,
     duration: interview.duration,
-    published_at: new Date(interview.published_at).toLocaleDateString('fr-FR', {
-      year: 'numeric', month: 'long', day: 'numeric'
+    published_at: new Date(interview.published_at).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }),
     views: interview.views || 0,
     likes: interview.likes || 0,
@@ -85,13 +100,17 @@ export default async function InterviewDetailPage({ params }: { params: { id: st
     tags: interview.tags || [],
   };
 
-  const formattedQuestions: Question[] = (questions || []).map(q => ({
+  const formattedQuestions: Question[] = (questions || []).map((q) => ({
     id: q.id,
     question: q.question,
     answer: q.answer,
     timestamp_video: q.timestamp_video,
   }));
 
-  // Note: La logique de `isLiked` devra être gérée côté client
-  return <InterviewDetailClient interview={formattedInterview} questions={formattedQuestions} />;
-} 
+  return (
+    <InterviewDetailClient
+      interview={formattedInterview}
+      questions={formattedQuestions}
+    />
+  );
+}
